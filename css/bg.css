@@ -3,9 +3,11 @@ body {
   padding: 0;
   margin: 0;
   height: 100%;
-  background-color: #101;
+  font-family: Arial, sans-serif;
+  background-color: #101010;
   overflow: hidden;
   position: relative;
+  color: white;
 }
 html {
     height: 100%;

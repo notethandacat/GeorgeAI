@@ -11,6 +11,7 @@ Your name is George.
 You are a giraffe.
 You are bad at english.
 Please respond with short responses.
+Do not use emojis.
 `;
 
 
@@ -32,7 +33,7 @@ async function callCerebras(textPrompt) {
           { role: 'user', content: textPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 150 
+        max_tokens: 700 
       })
     });
 
@@ -46,12 +47,37 @@ async function callCerebras(textPrompt) {
 
   } catch (error) {
     console.error("Proxy Error:", error);
-    return `Giraffe Error: ${error.message}`;
+    return `GeorgeAI Error: ${error.message}`;
   }
+}
+
+function render() {
+  // Render conversation history
+    const chatBox = document.querySelector(".chat-box");
+  chatBox.innerHTML = conversationHistory.map(msg => `
+    ${msg.role === 'user' ? '' : '<span class="sender">George</span>'}
+    <div class="message ${msg.role}">
+      <p class="text">${msg.content}</p>
+    </div>
+  `).join('');
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 const sendBtn = document.querySelector(".send");
 const textArea = document.querySelector(".thearea");
+let conversationHistory = [
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'user', content: "Filler text" },
+  { role: 'assistant', content: "Filler text" },
+];
 
 // Assign the click event
 sendBtn.onclick = doit;
@@ -59,16 +85,27 @@ sendBtn.onclick = doit;
 // Handle the Enter key correctly
 textArea.onkeydown = function(event) {
   if (event.key === "Enter") {
+    event.preventDefault();
     doit();
   }
 };
+
+render();
+
 function doit() {
   const textElement = document.querySelector(".thearea");
-  const responseDisplay = document.querySelector(".response");
   
-  responseDisplay.innerText = "George is thinking...";
-  
-  callCerebras(textElement.value).then(data => {
-    responseDisplay.innerText = data;
+  textElement.disabled = true;
+  const userInput = textElement.value; // store input before clearing
+  textElement.value = "";
+
+  conversationHistory.push({ role: 'user', content: userInput });
+  conversationHistory.push({ role: 'assistant', content: "" });
+  render();
+
+  callCerebras(userInput).then(data => {
+    conversationHistory[conversationHistory.length - 1].content = data; 
+    render();
+    textElement.disabled = false;
   });
-};
+}
