@@ -24,15 +24,19 @@
   outline: none;
 }
 .send {
-  background-color: #eee;
-  color: #000;
+  background-color: rgba(65, 65, 65, 1);
+  color: #fff;
+  font-size: 1.2em;
   border: none;
+  font-family: "Material Icons", sans-serif;
+  height: 100%;
+  width: 40px;
   padding: 1px;
   margin-left: 5px;
   border-radius: 20px;
-  filter: invert(0%);
-  transition: filter ease-in-out 0.2s;
+  transition: background-color ease-in-out 0.2s, color ease-in-out 0.2s;
 }
 .send:hover {
-  filter: invert(100%);
+  background-color: #fff;
+  color: #000;
 }

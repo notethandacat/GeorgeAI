@@ -1,0 +1,21 @@
+{
+  "name": "georgeai",
+  "image": "debian:bookworm-slim",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "forwardPorts": [3000],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.live-server"
+      ]
+    }
+  },
+  "portsAttributes": {
+    "3000": {
+      "label": "Live Preview"
+    }
+  },
+  "postAttachCommand": ". .devcontainer/welcome.sh"
+}

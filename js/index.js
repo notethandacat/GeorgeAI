@@ -13,19 +13,18 @@ if (params.size === 0) {
     name = "George";
     AI_PROFILE = "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg";
     sysInstructions = `
-Your name is George.
 You are a giraffe.
-You are bad at english.
+You are bad at english but think you are good at english.
 Please respond with short responses.
-Use emojis.
 Use markdown everywhere.
 `;
 } else {
     // 1. If a specific parameter doesn't exist, use Custom Agent defaults
     name = params.get('name') || "Custom Agent";
     sysInstructions = params.get('instructions') || "";
-    AI_PROFILE = params.get('icon') || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTC29mdR0ZLibl0JNBx29bEqJ3oWLZHTLRhzA&s";
+    AI_PROFILE = params.get('icon') || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0])}`;
 }
+sysInstructions += "\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions) or LaTeX (provided by KaTeX, delimiters are <(LaTeX Goes Here)> for inline and <[LaTeX Goes Here]> for display) in your responses. Always try to use them when appropriate.";
 
 // Log for testing
 console.log("Name:", name);
@@ -45,14 +44,14 @@ async function callCerebras(textPrompt) {
         // Notice: No Authorization header here! Flask adds it.
       },
       body: JSON.stringify({
-        model: 'gpt-oss-120b', 
+        model: 'qwen-3-235b-a22b-instruct-2507', 
         stream: false,
         messages: [
           { role: 'system', content: sysInstructions },
           { role: 'user', content: textPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 700 
+        max_tokens: 1500 
       })
     });
 
@@ -66,7 +65,7 @@ async function callCerebras(textPrompt) {
 
   } catch (error) {
     console.error("Proxy Error:", error);
-    return `GeorgeAI Error: ${error.message}`;
+    return `Oopsies, I think I popped a brain. Could you help me debug this? Here is some information: ${error.message}`;
   }
 }
 
@@ -124,4 +123,8 @@ function doit() {
     render();
     textElement.disabled = false;
   });
+}
+
+document.getElementById("new").onclick = function() {
+  window.location.href = "/";
 }
