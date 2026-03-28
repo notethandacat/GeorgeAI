@@ -4,13 +4,21 @@
         <link rel="stylesheet" href="css/input.css">
         <link rel="stylesheet" href="css/chat.css">
         <link rel="stylesheet" href="css/bg.css">
+        <link rel="stylesheet" href="css/markdown.css">
+        <script src="https://cdn.jsdelivr.net/npm/marked@17.0.3/lib/marked.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/marked-highlight@2.2.3/lib/index.umd.min.js"></script>
     </head>
     <body>    
+        <header>
+            <a href="/createAgent.html" style="justify-self: flex-start; color: white;">Make your own agent!</a>
+            <h1>GeorgeAI</h1>
+        </header>
         <div class="chat-box"></div>
         <div class="talk">
             <input type="text" class="thearea" placeholder="talk to george here">
             <img src="https://static.thenounproject.com/png/1054386-200.png" class="send"/>
         </div>
+        
         <script src="js/index.js"></script>
     </body>
 </html>

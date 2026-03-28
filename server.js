@@ -9,7 +9,12 @@ if (isNaN(PORT)) {
 }
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+  // 1. STRIP THE QUERY STRING
+  const requestPath = req.url.split('?')[0]; 
+
+  // 2. USE THE CLEAN PATH
+  let filePath = path.join(__dirname, requestPath === '/' ? 'index.html' : requestPath);
+  
   const ext = path.extname(filePath).toLowerCase();
 
   const mimeTypes = {
@@ -30,7 +35,8 @@ const server = http.createServer((req, res) => {
       res.end('404 Not Found');
       return;
     }
-    res.writeHead(200, {'Content-Type': mimeTypes[ext] || 'application/octet-stream'});
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    res.writeHead(200, {'Content-Type': contentType});
     res.end(content);
   });
 });

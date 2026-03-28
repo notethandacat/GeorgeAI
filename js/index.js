@@ -3,17 +3,36 @@ const PROXY_URL = 'https://ai-write-nine.vercel.app/proxy/';
 // The actual Cerebras endpoint (without the proxy prefix)
 const CEREBRAS_ENDPOINT = 'api.cerebras.ai/v1/chat/completions';
 
-const AI_PROFILE = "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg";
-let messages = [];
+// Get URL parameters
+const params = new URLSearchParams(window.location.search);
 
-const sysInstructions = `
+let name, sysInstructions, AI_PROFILE;
+
+// 2. Unless if there ISN'T ANYTHING AT ALL, use George
+if (params.size === 0) {
+    name = "George";
+    AI_PROFILE = "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg";
+    sysInstructions = `
 Your name is George.
 You are a giraffe.
 You are bad at english.
 Please respond with short responses.
-Do not use emojis.
+Use emojis.
+Use markdown everywhere.
 `;
+} else {
+    // 1. If a specific parameter doesn't exist, use Custom Agent defaults
+    name = params.get('name') || "Custom Agent";
+    sysInstructions = params.get('instructions') || "";
+    AI_PROFILE = params.get('icon') || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTC29mdR0ZLibl0JNBx29bEqJ3oWLZHTLRhzA&s";
+}
 
+// Log for testing
+console.log("Name:", name);
+console.log("Instructions:", sysInstructions);
+console.log("Profile:", AI_PROFILE);
+
+let messages = [];
 
 async function callCerebras(textPrompt) {
   try {
@@ -52,31 +71,28 @@ async function callCerebras(textPrompt) {
 }
 
 function render() {
-  // Render conversation history
-    const chatBox = document.querySelector(".chat-box");
-  chatBox.innerHTML = conversationHistory.map(msg => `
-    ${msg.role === 'user' ? '' : '<span class="sender">George</span>'}
-    <div class="message ${msg.role}">
-      <p class="text">${msg.content}</p>
-    </div>
-  `).join('');
+  const chatBox = document.querySelector(".chat-box");
+  
+  chatBox.innerHTML = conversationHistory.map(msg => {
+    // 1. Parse the markdown content into HTML
+    // We use marked.parse() which is available globally via UMD
+    let parsedContent = msg.content;
+    if (msg.role === "assistant") parsedContent = marked.parse(msg.content);
+    return `
+      ${msg.role === "user" ? '' : '<div class="message">'}
+      ${msg.role === "user" ? '' : '<img class="profile" src='+AI_PROFILE+'>'}
+        <div class="text ${msg.role} ${msg.role == 'user' ? '' : 'markdown-body'}">${parsedContent}</div>
+      ${msg.role === "user" ? '' : '</div>'}
+    `;
+  }).join('');
+  
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 const sendBtn = document.querySelector(".send");
 const textArea = document.querySelector(".thearea");
 let conversationHistory = [
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'user', content: "Filler text" },
-  { role: 'assistant', content: "Filler text" },
+  { role: 'assistant', content: "Welcome to GeorgeAI!" },
 ];
 
 // Assign the click event

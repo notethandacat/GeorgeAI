@@ -1,9 +1,9 @@
 .talk {
   display: flex;
-  position: absolute;
+  position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 20px;
+  bottom: 40px;
   background-color: rgba(50, 50, 50, 0.7);
   width: max(30%, 300px);
   height: 40px;
