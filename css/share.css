@@ -1,0 +1,355 @@
+/* Share Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: #1e1e1e;
+  margin: 5% auto;
+  padding: 30px;
+  border: 1px solid #444;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-content h2 {
+  color: #ffffff;
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 24px;
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 20px;
+}
+
+.close:hover,
+.close:focus {
+  color: #fff;
+}
+
+.share-options {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-option label {
+  color: #b0b0b0;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.share-link-container {
+  display: flex;
+  gap: 8px;
+}
+
+.share-input {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 12px;
+  font-family: monospace;
+  overflow-x: auto;
+  word-break: break-all;
+}
+
+.share-input:focus {
+  outline: none;
+  border-color: #0e639c;
+  background-color: #333;
+}
+
+.copy-btn,
+.export-btn,
+.save-btn,
+.load-btn,
+.delete-btn {
+  padding: 10px 16px;
+  background-color: rgba(65, 65, 65, 1);
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.copy-btn:hover,
+.export-btn:hover,
+.save-btn:hover,
+.load-btn:hover,
+.delete-btn:hover {
+  background-color: #000;
+}
+
+.copy-btn:active,
+.export-btn:active,
+.save-btn:active,
+.load-btn:active,
+.delete-btn:active {
+  transform: translateY(0);
+}
+
+.chat-name-input,
+.saved-chats-select {
+  padding: 10px 12px;
+  background-color: #2d2d2d;
+  border: 1px solid #444;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.chat-name-input:focus,
+.saved-chats-select:focus {
+  outline: none;
+  border-color: #0e639c;
+  background-color: #333;
+}
+
+.saved-chats-select {
+  cursor: pointer;
+}
+
+.saved-chats-select option {
+  background-color: #2d2d2d;
+  color: #fff;
+}
+
+/* Button groups */
+.share-option {
+  display: grid;
+  gap: 8px;
+}
+
+.share-option:has(.share-link-container) {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.share-option:has(.share-link-container) label {
+  grid-column: 1 / -1;
+}
+
+.share-option:has(.share-link-container) .share-link-container {
+  grid-column: 1 / -1;
+}
+
+.share-option:has(.chat-name-input) {
+  grid-template-columns: 1fr;
+}
+
+/* QR Code Styles */
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background-color: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.qr-code-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 5px;
+  min-height: 200px;
+}
+
+.qr-code-container canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.alert-agent {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.alert-agent__toast {
+  min-width: 240px;
+  max-width: 320px;
+  background-color: rgba(35, 35, 35, 0.95);
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  font-size: 14px;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: toastIn 0.25s ease forwards;
+  pointer-events: auto;
+}
+
+.alert-agent__toast.info {
+  border: 1px solid #3ea6ff;
+}
+
+.alert-agent__toast.success {
+  border: 1px solid #3ad29f;
+}
+
+.alert-agent__toast.error {
+  border: 1px solid #ff5e70;
+}
+
+.alert-agent__toast.hide {
+  animation: toastOut 0.2s ease forwards;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+.confirm-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 10002;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-modal.active {
+  display: flex;
+}
+
+.confirm-modal__content {
+  width: min(90%, 420px);
+  background: #141414;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: left;
+}
+
+.confirm-modal__content h2 {
+  margin-top: 0;
+  color: #fff;
+}
+
+.confirm-modal__content p {
+  color: #ddd;
+  margin: 14px 0 22px;
+}
+
+.confirm-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.confirm-btn.cancel {
+  background: #2d2d2d;
+  color: #fff;
+}
+
+.confirm-btn.accept {
+  background: #3ad29f;
+  color: #000;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .modal-content {
+    width: 95%;
+    margin: 20% auto;
+    padding: 20px;
+  }
+
+  .modal-content h2 {
+    font-size: 20px;
+  }
+
+  .share-link-container {
+    flex-direction: column;
+  }
+
+  .share-input {
+    word-break: break-word;
+  }
+
+  .qr-code-container {
+    min-height: 150px;
+  }
+}

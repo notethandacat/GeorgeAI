@@ -5,30 +5,16 @@
         <link rel="stylesheet" href="css/chat.css">
         <link rel="stylesheet" href="css/bg.css">
         <link rel="stylesheet" href="css/markdown.css">
+        <link rel="stylesheet" href="css/share.css">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/marked@17.0.3/lib/marked.umd.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/marked-highlight@2.2.3/lib/index.umd.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.44/dist/katex.min.css" integrity="sha384-irXK0JiCGinqGL+slwVklbhJetrjczNwaP2lANewD8lKAs9n61SbQ3As28iSqXUE" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.44/dist/katex.min.js" integrity="sha384-m/s9umSlhJbqEdA/j7pQVdGCMx2fHf7GXtgCVhNGOwLuu+1qJQES5AzIE8pn3nKQ" crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.44/dist/contrib/auto-render.min.js" integrity="sha384-bjyGPfbij8/NDKJhSGZNP/khQVgtHUE5exjm4Ydllo42FwIgYsdLO2lXGmRBf5Mz" crossorigin="anonymous"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        renderMathInElement(document.body, {
-          // customised options
-          // • auto-render specific keys, e.g.:
-          delimiters: [
-              {left: '<(', right: ')>', display: false},
-              {left: '<[', right: ']>', display: true},
-          ],
-          // • rendering keys, e.g.:
-          throwOnError : false
-        });
-    });
-</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     </head>
     <body>    
         <header>
             <button id="new">+</button>
+            <button id="share">&#xe80d;</button>
             <a href="/createAgent.html" style="justify-self: flex-start; color: white;" id="ownagent">Create Agent</a>
             <h1>GeorgeAI</h1>
         </header>
@@ -38,7 +24,57 @@
             <input type="text" class="thearea" placeholder="talk to george here">
             <button class="send">&#xe163;</button>
         </div>
-        
+
+        <!-- Share Modal -->
+        <div id="shareModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Share Chat</h2>
+                <div class="share-options">
+                    <div class="share-option">
+                        <label>Share Link:</label>
+                        <div class="share-link-container">
+                            <input type="text" id="shareLink" readonly class="share-input">
+                            <button id="copyShareLink" class="copy-btn">Copy Link</button>
+                        </div>
+                    </div>
+                    <div class="share-option qr-section">
+                        <label>Scan to Share (Mobile):</label>
+                        <div id="qrCode" class="qr-code-container"></div>
+                    </div>
+                    <div class="share-option">
+                        <label>Export as JSON:</label>
+                        <button id="exportChat" class="export-btn">Download</button>
+                    </div>
+                    <div class="share-option">
+                        <label>Save Chat:</label>
+                        <input type="text" id="chatName" placeholder="Enter chat name..." class="chat-name-input">
+                        <button id="saveChat" class="save-btn">Save</button>
+                    </div>
+                    <div class="share-option">
+                        <label>Your Saved Chats:</label>
+                        <select id="savedChats" class="saved-chats-select">
+                            <option value="">-- No saved chats --</option>
+                        </select>
+                        <button id="loadChat" class="load-btn">Load</button>
+                        <button id="deleteChat" class="delete-btn">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alertAgent" class="alert-agent"></div>
+        <div id="confirmModal" class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+            <div class="confirm-modal__content">
+                <h2 id="confirmTitle">Confirm action</h2>
+                <p id="confirmMessage">Are you sure?</p>
+                <div class="confirm-modal__actions">
+                    <button id="confirmCancel" class="confirm-btn cancel">Cancel</button>
+                    <button id="confirmAccept" class="confirm-btn accept">Confirm</button>
+                </div>
+            </div>
+        </div>
+
         <script src="js/index.js"></script>
     </body>
 </html>
