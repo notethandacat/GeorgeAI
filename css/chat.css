@@ -1,13 +1,13 @@
 .chat-box {
     display: flex;
     flex-direction: column;
-    height: calc(100% - 70px);
+    height: calc(100vh - 260px);
     overflow-y: auto;
     padding: 10px;
     padding-top: 90px;
     /* This aligns items to the start of the cross-axis (left) */
     align-items: flex-start; 
-    padding-bottom: 100px; 
+    margin-bottom: 100px; 
 }
 
 .user {
