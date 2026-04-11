@@ -1,9 +1,6 @@
-// Your new Flask Proxy URL
 const PROXY_URL = 'https://ai-write-nine.vercel.app/proxy/';
-// The actual Cerebras endpoint (without the proxy prefix)
 const CEREBRAS_ENDPOINT = 'api.cerebras.ai/v1/chat/completions';
 
-// Get URL parameters
 const params = new URLSearchParams(window.location.search);
 const GEORGE_DEFAULT_PROFILE = "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg";
 const GEORGE_DEFAULT_INSTRUCTIONS = `
@@ -20,435 +17,517 @@ const hasIconParam = params.has('icon');
 
 let name, sysInstructions, AI_PROFILE, conversationHistory;
 
-// 2. Unless if there ISN'T ANYTHING AT ALL, use George
 if (hasChatParam && !hasNameParam && !hasInstructionsParam && !hasIconParam) {
     name = "George";
     AI_PROFILE = GEORGE_DEFAULT_PROFILE;
     sysInstructions = GEORGE_DEFAULT_INSTRUCTIONS;
-    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
+    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!", sender: "George" }];
 } else if (params.size === 0) {
     name = "George";
     AI_PROFILE = GEORGE_DEFAULT_PROFILE;
     sysInstructions = GEORGE_DEFAULT_INSTRUCTIONS;
-    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
+    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!", sender: "George" }];
 } else {
-    // 1. If a specific parameter doesn't exist, use Custom Agent defaults
     name = params.get('name') || "Custom Agent";
     sysInstructions = params.get('instructions') || "";
     AI_PROFILE = params.get('icon') || `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0])}`;
-    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
+    conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!", sender: name }];
 }
 
 if (params.has('chat')) {
-    // Handle shared chat via encoded URL parameter
     try {
-      const encodedData = decodeURIComponent(params.get('chat'));
-      const decodedString = safeBase64Decode(encodedData);
-      const decodedData = JSON.parse(decodedString);
-      conversationHistory = decodedData.messages || [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
-      
-      if (params.has('profile')) {
-        AI_PROFILE = decodeURIComponent(params.get('profile'));
-      } else {
-        AI_PROFILE = name === "George"
-          ? "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg"
-          : `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0])}`;
-      }
-      
-      console.log("Loaded shared chat successfully");
+        const encodedData = decodeURIComponent(params.get('chat'));
+        const decodedString = safeBase64Decode(encodedData);
+        const decodedData = JSON.parse(decodedString);
+        conversationHistory = decodedData.messages || [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
+        if (params.has('profile')) {
+            AI_PROFILE = decodeURIComponent(params.get('profile'));
+        } else {
+            AI_PROFILE = name === "George"
+                ? GEORGE_DEFAULT_PROFILE
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(name[0])}`;
+        }
     } catch (error) {
-      console.error("Error decoding shared chat:", error);
-      showAlert("Unable to load shared chat. Using default agent.", "error");
-      name = "George";
-      AI_PROFILE = "https://animalfactguide.com/wp-content/uploads/2025/03/giraffe-closeup.jpg";
-      sysInstructions = `
-You are a giraffe.
-You are bad at english but think you are good at english.
-Please respond with short responses.
-Use markdown everywhere.
-`;
-      conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
+        console.error("Error decoding shared chat:", error);
+        showAlert("Unable to load shared chat. Using default agent.", "error");
+        name = "George";
+        AI_PROFILE = GEORGE_DEFAULT_PROFILE;
+        sysInstructions = GEORGE_DEFAULT_INSTRUCTIONS;
+        conversationHistory = [{ role: 'assistant', content: "Welcome to GeorgeAI!" }];
     }
 }
-sysInstructions += "\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.";
 
-// Log for testing
-console.log("Name:", name);
-console.log("Instructions:", sysInstructions);
-console.log("Profile:", AI_PROFILE);
+function getSysSuffix() {
+    return `\n\nYour name is ${name}. You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.`;
+}
 
-let messages = [];
+sysInstructions += getSysSuffix();
 
+// Unique session ID — each new conversation gets its own slot in localStorage
+let sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+
+// User's display name, persisted across sessions
+let userName = localStorage.getItem('userName') || 'You';
+
+// ===== UI HELPERS =====
 function showAlert(message, type = 'info', duration = 3500) {
-  const container = document.getElementById('alertAgent');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `alert-agent__toast ${type}`;
-  toast.textContent = message;
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.classList.add('hide');
-    setTimeout(() => toast.remove(), 220);
-  }, duration);
+    const container = document.getElementById('alertAgent');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `alert-agent__toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 220);
+    }, duration);
 }
 
 function showConfirm(message, onConfirm, onCancel) {
-  const modal = document.getElementById('confirmModal');
-  const messageNode = document.getElementById('confirmMessage');
-  const acceptBtn = document.getElementById('confirmAccept');
-  const cancelBtn = document.getElementById('confirmCancel');
-  if (!modal || !messageNode || !acceptBtn || !cancelBtn) return;
+    const modal = document.getElementById('confirmModal');
+    const messageNode = document.getElementById('confirmMessage');
+    const acceptBtn = document.getElementById('confirmAccept');
+    const cancelBtn = document.getElementById('confirmCancel');
+    if (!modal || !messageNode || !acceptBtn || !cancelBtn) return;
 
-  messageNode.textContent = message;
-  modal.classList.add('active');
+    messageNode.textContent = message;
+    modal.classList.add('active');
 
-  const cleanup = () => {
-    modal.classList.remove('active');
-    acceptBtn.removeEventListener('click', handleAccept);
-    cancelBtn.removeEventListener('click', handleCancel);
-    modal.removeEventListener('click', handleBackgroundClick);
-  };
+    const cleanup = () => {
+        modal.classList.remove('active');
+        acceptBtn.removeEventListener('click', handleAccept);
+        cancelBtn.removeEventListener('click', handleCancel);
+        modal.removeEventListener('click', handleBg);
+    };
+    const handleAccept = () => { cleanup(); onConfirm && onConfirm(); };
+    const handleCancel = () => { cleanup(); onCancel && onCancel(); };
+    const handleBg = e => { if (e.target === modal) handleCancel(); };
 
-  const handleAccept = () => {
-    cleanup();
-    onConfirm && onConfirm();
-  };
-
-  const handleCancel = () => {
-    cleanup();
-    onCancel && onCancel();
-  };
-
-  const handleBackgroundClick = event => {
-    if (event.target === modal) {
-      handleCancel();
-    }
-  };
-
-  acceptBtn.addEventListener('click', handleAccept);
-  cancelBtn.addEventListener('click', handleCancel);
-  modal.addEventListener('click', handleBackgroundClick);
+    acceptBtn.addEventListener('click', handleAccept);
+    cancelBtn.addEventListener('click', handleCancel);
+    modal.addEventListener('click', handleBg);
 }
 
-// ===== STORAGE FUNCTIONS =====
+function formatDate(ts) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+    return new Date(ts).toLocaleDateString();
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== ENCODING =====
 function safeBase64Encode(value) {
-  return btoa(
-    encodeURIComponent(value).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-      return String.fromCharCode('0x' + p1);
-    })
-  );
+    return btoa(
+        encodeURIComponent(value).replace(/%([0-9A-F]{2})/g, (_, p1) => String.fromCharCode('0x' + p1))
+    );
 }
 
 function safeBase64Decode(value) {
-  const text = atob(value);
-  const bytes = Array.prototype.map.call(text, function(char) {
-    return '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2);
-  }).join('');
-  return decodeURIComponent(bytes);
+    const text = atob(value);
+    const bytes = Array.prototype.map.call(text, c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('');
+    return decodeURIComponent(bytes);
 }
 
-function generateShareableLink() {
-  console.log("Generating share link with conversation history:", conversationHistory);
-  
-  const chatData = {
-    messages: conversationHistory
-  };
-  
-  console.log("Share data:", chatData);
-  
-  try {
-    const jsonString = JSON.stringify(chatData);
-    const encoded = safeBase64Encode(jsonString);
-    const encodedParam = encodeURIComponent(encoded);
-    const baseUrl = window.location.origin + window.location.pathname;
-    const currentParams = new URLSearchParams(window.location.search);
-    currentParams.delete('chat');
-    currentParams.set('chat', encodedParam);
-    const finalLink = `${baseUrl}?${currentParams.toString()}`;
-    
-    console.log("Generated share link:", finalLink);
-    return finalLink;
-  } catch (error) {
-    console.error("Error generating shareable link:", error);
-    showAlert("Unable to generate share link.", "error");
-    return "";
-  }
+// ===== STORAGE =====
+function autoSaveChat() {
+    const userMsgs = conversationHistory.filter(m => m.role === 'user');
+    if (!userMsgs.length) return;
+
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    saved[sessionId] = {
+        id: sessionId,
+        name: userMsgs[0].content.slice(0, 45),
+        timestamp: Date.now(),
+        agentName: name,
+        agentIcon: AI_PROFILE,
+        agentInstructions: sysInstructions.replace(getSysSuffix(), ''),
+        userName: userName,
+        messages: conversationHistory
+    };
+    localStorage.setItem('savedChats', JSON.stringify(saved));
 }
 
-function saveCurrentChat(chatName) {
-  if (!chatName || chatName.trim() === "") {
-    showAlert("Please enter a chat name!", "error");
-    return;
-  }
-  
-  const chatData = {
-    name: chatName,
-    timestamp: Date.now(),
-    agentName: name,
-    agentIcon: AI_PROFILE,
-    agentInstructions: sysInstructions.replace("\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.", ""),
-    messages: conversationHistory
-  };
-  
-  let savedChats = JSON.parse(localStorage.getItem('savedChats') || '{}');
-  savedChats[chatName] = chatData;
-  localStorage.setItem('savedChats', JSON.stringify(savedChats));
-  
-  updateSavedChatsList();
-  showAlert(`Chat "${chatName}" saved successfully!`, "success");
-  document.getElementById('chatName').value = '';
-}
-
-function loadSavedChat(chatName) {
-  let savedChats = JSON.parse(localStorage.getItem('savedChats') || '{}');
-  
-  if (savedChats[chatName]) {
-    const chatData = savedChats[chatName];
-    name = chatData.agentName;
-    AI_PROFILE = chatData.agentIcon;
-    sysInstructions = chatData.agentInstructions + "\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.";
-    conversationHistory = chatData.messages;
-    render();
-    closeShareModal();
-  } else {
-    showAlert("Chat not found!", "error");
-  }
-}
-
-function deleteChat(chatName) {
-  if (!chatName || chatName === "") {
-    showAlert("Please select a chat to delete!", "error");
-    return;
-  }
-  
-  showConfirm(`Delete chat "${chatName}"?`, () => {
-    let savedChats = JSON.parse(localStorage.getItem('savedChats') || '{}');
-    delete savedChats[chatName];
-    localStorage.setItem('savedChats', JSON.stringify(savedChats));
-    updateSavedChatsList();
-    showAlert(`Chat "${chatName}" deleted!`, "success");
-  });
-}
-
-function updateSavedChatsList() {
-  const select = document.getElementById('savedChats');
-  const savedChats = JSON.parse(localStorage.getItem('savedChats') || '{}');
-  
-  // Clear existing options except the first one
-  select.innerHTML = '<option value="">-- No saved chats --</option>';
-  
-  Object.keys(savedChats).forEach(chatName => {
-    const option = document.createElement('option');
-    option.value = chatName;
-    option.textContent = chatName;
-    select.appendChild(option);
-  });
-}
-
-function exportChatAsJSON() {
-  const data = {
-    agent: {
-      name: name,
-      icon: AI_PROFILE,
-      instructions: sysInstructions.replace("\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.", "")
-    },
-    messages: conversationHistory,
-    exportedAt: new Date().toISOString()
-  };
-  
-  const jsonString = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonString], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `chat-${Date.now()}.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-async function callCerebras(textPrompt) {
-  try {
-    // We concatenate the proxy and the target URL
-    // Your Flask app handles the Injection of the Auth header
-    const response = await fetch(PROXY_URL + CEREBRAS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-        // Notice: No Authorization header here! Flask adds it.
-      },
-      body: JSON.stringify({
-        model: 'qwen-3-235b-a22b-instruct-2507', 
-        stream: false,
-        messages: [
-          { role: 'system', content: sysInstructions },
-          { role: 'user', content: textPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500 
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.details || `Error ${response.status}`);
+function generateShareableLinkForData(chatData) {
+    try {
+        const encoded = encodeURIComponent(safeBase64Encode(JSON.stringify({ messages: chatData.messages })));
+        const base = window.location.origin + window.location.pathname;
+        const p = new URLSearchParams();
+        if (chatData.agentName && chatData.agentName !== 'George') p.set('name', chatData.agentName);
+        p.set('chat', encoded);
+        return `${base}?${p.toString()}`;
+    } catch (e) {
+        return '';
     }
-
-    const result = await response.json();
-    return result.choices?.[0]?.message?.content || "No response generated.";
-
-  } catch (error) {
-    console.error("Proxy Error:", error);
-    showAlert("Proxy request failed. Check your connection or proxy settings.", "error");
-    return `Oopsies, I think I popped a brain. Could you help me debug this? Here is some information: ${error.message}`;
-  }
 }
 
+function exportChatDataAsJSON(chatData) {
+    const data = {
+        agent: { name: chatData.agentName, icon: chatData.agentIcon, instructions: chatData.agentInstructions },
+        messages: chatData.messages,
+        exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${(chatData.name || 'export').replace(/\s+/g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===== AI =====
+async function callCerebras(apiMessages) {
+    try {
+        const response = await fetch(PROXY_URL + CEREBRAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'qwen-3-235b-a22b-instruct-2507',
+                messages: [
+                    { role: 'system', content: sysInstructions },
+                    ...apiMessages
+                ],
+                temperature: 0.7,
+                max_tokens: 8192
+            })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.details || `Error ${response.status}`);
+        }
+        const result = await response.json();
+        return result.choices?.[0]?.message?.content || "No response generated.";
+    } catch (error) {
+        console.error("Proxy Error:", error);
+        showAlert("Proxy request failed. Check your connection or proxy settings.", "error");
+        return `Oopsies, I think I popped a brain. Could you help me debug this? Here is some information: ${error.message}`;
+    }
+}
+
+// ===== RENDER =====
 function render() {
-  const chatBox = document.querySelector(".chat-box");
-  chatBox.innerHTML = conversationHistory.map(msg => {
-    // 1. Parse the markdown content into HTML
-    // We use marked.parse() which is available globally via UMD
-    let parsedContent = msg.content;
-    if (msg.role === "assistant") parsedContent = marked.parse(msg.content);
-    return `
-      ${msg.role === "user" ? '' : '<div class="message">'}
-      ${msg.role === "user" ? '' : '<img class="profile" src='+AI_PROFILE+'>'}
-        <div class="text ${msg.role} ${msg.role == 'user' ? '' : 'markdown-body'}">${parsedContent}</div>
-      ${msg.role === "user" ? '' : '</div>'}
-    `;
-  }).join('');
-  chatBox.innerHTML += "<div style='height: 100px;'></div>"
-  chatBox.scrollTop = chatBox.scrollHeight;
+    const chatBox = document.querySelector(".chat-box");
+    chatBox.innerHTML = conversationHistory.map(msg => {
+        let parsedContent = msg.content;
+        if (msg.role === "assistant") parsedContent = marked.parse(msg.content);
+        const senderLabel = msg.sender || (msg.role === 'user' ? userName : name);
+        return `
+            ${msg.role === "user" ? '' : '<div class="message">'}
+            ${msg.role === "user" ? '' : `<img class="profile" src="${AI_PROFILE}">`}
+            <div class="text ${msg.role} ${msg.role === 'user' ? '' : 'markdown-body'}">
+                <div class="sender">${senderLabel}</div>
+                ${parsedContent}
+            </div>
+            ${msg.role === "user" ? '' : '</div>'}
+        `;
+    }).join('');
+    chatBox.innerHTML += "<div style='height: 100px;'></div>";
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+// ===== SEND =====
 const sendBtn = document.querySelector(".send");
 const textArea = document.querySelector(".thearea");
-
-// Assign the click event
 sendBtn.onclick = doit;
-
-// Handle the Enter key correctly
 textArea.onkeydown = function(event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    doit();
-  }
+    if (event.key === "Enter") { event.preventDefault(); doit(); }
 };
 
+function setLandingMode(enabled) {
+    document.body.classList.toggle('landing', enabled);
+}
+
+function updateAgentUI() {
+    document.getElementById('welcomeTitle').textContent = `Welcome to ${name}`;
+    document.querySelector('.thearea').placeholder = name === 'George'
+        ? 'Ask about anything here'
+        : `Chat with ${name} here`;
+    document.getElementById('userNameInput').value = userName;
+}
+
+setLandingMode(!conversationHistory.some(m => m.role === 'user'));
+updateAgentUI();
 render();
 
 function doit() {
-  const textElement = document.querySelector(".thearea");
-  
-  textElement.disabled = true;
-  const userInput = textElement.value; // store input before clearing
-  textElement.value = "";
+    const textElement = document.querySelector(".thearea");
+    const userInput = textElement.value;
+    if (!userInput.trim()) return;
 
-  conversationHistory.push({ role: 'user', content: userInput });
-  conversationHistory.push({ role: 'assistant', content: "" });
-  render();
+    setLandingMode(false);
+    textElement.disabled = true;
+    textElement.value = "";
 
-  callCerebras(userInput).then(data => {
-    conversationHistory[conversationHistory.length - 1].content = data; 
+    conversationHistory.push({ role: 'user', content: userInput, sender: userName });
+    conversationHistory.push({ role: 'assistant', content: "", sender: name });
     render();
-    textElement.disabled = false;
-    autoSaveChat(); // Auto-save after each message
-  });
+
+    // Build API messages: full history minus the empty placeholder at the end
+    const apiMessages = conversationHistory
+        .slice(0, -1)
+        .map(m => ({ role: m.role, content: m.content }));
+
+    callCerebras(apiMessages).then(data => {
+        conversationHistory[conversationHistory.length - 1].content = data;
+        render();
+        textElement.disabled = false;
+        autoSaveChat();
+    });
 }
 
 document.getElementById("new").onclick = function() {
-  window.location.href = "/";
+    window.location.href = "/";
+};
+
+// ===== MENU PANEL =====
+function openMenu() {
+    renderChatList();
+    document.getElementById('menuPanel').classList.add('active');
+    document.getElementById('menuOverlay').classList.add('active');
 }
 
-// ===== SHARE MODAL FUNCTIONS =====
-function openShareModal() {
-  document.getElementById('shareModal').style.display = 'block';
-  updateSavedChatsList();
-  updateShareLink();
+function closeMenu() {
+    document.getElementById('menuPanel').classList.remove('active');
+    document.getElementById('menuOverlay').classList.remove('active');
 }
 
-function closeShareModal() {
-  document.getElementById('shareModal').style.display = 'none';
-}
+function renderChatList() {
+    const list = document.getElementById('chatList');
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    const chats = Object.values(saved).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-function updateShareLink() {
-  const shareLink = generateShareableLink();
-  const shareInput = document.getElementById('shareLink');
-  shareInput.value = shareLink || '';
-  
-  // Generate QR Code
-  const qrContainer = document.getElementById('qrCode');
-  qrContainer.innerHTML = ''; // Clear previous QR code
-  
-  if (shareLink) {
-    new QRCode(qrContainer, {
-      text: shareLink,
-      width: 180,
-      height: 180,
-      colorDark: '#000000',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
+    if (!chats.length) {
+        list.innerHTML = '<p class="chat-list__empty">No saved chats yet.<br>Start a conversation and it\'ll appear here.</p>';
+        return;
+    }
+
+    list.innerHTML = chats.map(chat => {
+        const id = escapeHtml(chat.id || chat.name);
+        return `
+            <div class="chat-item" data-id="${id}">
+                <div class="chat-item__info">
+                    <div class="chat-item__name">${escapeHtml(chat.name || 'Untitled')}</div>
+                    <div class="chat-item__meta">${escapeHtml(chat.agentName || 'George')} · ${formatDate(chat.timestamp)}</div>
+                </div>
+                <div class="chat-item__actions">
+                    <button class="chat-item__btn" data-action="share" data-id="${id}" title="Share">&#xe80d;</button>
+                    <button class="chat-item__btn danger" data-action="delete" data-id="${id}" title="Delete">&#xe872;</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    list.querySelectorAll('.chat-item__info').forEach(el => {
+        el.onclick = () => loadMenuChat(el.closest('.chat-item').dataset.id);
     });
-  } else {
-    qrContainer.textContent = 'Unable to generate link';
-  }
+    list.querySelectorAll('[data-action="share"]').forEach(btn => {
+        btn.onclick = e => { e.stopPropagation(); openChatShare(btn.dataset.id); };
+    });
+    list.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.onclick = e => { e.stopPropagation(); deleteMenuChat(btn.dataset.id); };
+    });
 }
 
-// Auto-save conversation to localStorage periodically
-let autoSaveCounter = 0;
-function autoSaveChat() {
-  autoSaveCounter++;
-  // Save every 5 messages
-  if (autoSaveCounter >= 5) {
-    const autoSaveData = {
-      timestamp: Date.now(),
-      agentName: name,
-      agentIcon: AI_PROFILE,
-      agentInstructions: sysInstructions.replace("\n\nYour name is " + name + ". You may use Markdown (marked.js, no extensions). You do not have LaTeX capabilities. Always try to use them when appropriate.", ""),
-      messages: conversationHistory
-    };
-    localStorage.setItem('autosave', JSON.stringify(autoSaveData));
-    autoSaveCounter = 0;
-  }
+function loadMenuChat(chatId) {
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    const chat = saved[chatId];
+    if (!chat) return;
+
+    sessionId = chatId;
+    name = chat.agentName || 'George';
+    AI_PROFILE = chat.agentIcon;
+    sysInstructions = (chat.agentInstructions || '') + getSysSuffix();
+
+    // Stamp any missing senders using the names recorded at save time
+    const savedUser = chat.userName || 'You';
+    const savedAgent = chat.agentName || 'George';
+    conversationHistory = chat.messages.map(m => ({
+        ...m,
+        sender: m.sender || (m.role === 'user' ? savedUser : savedAgent)
+    }));
+
+    setLandingMode(!conversationHistory.some(m => m.role === 'user'));
+    updateAgentUI();
+    render();
+    closeMenu();
 }
+
+function deleteMenuChat(chatId) {
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    const label = saved[chatId]?.name || chatId;
+    showConfirm(`Delete "${label}"?`, () => {
+        delete saved[chatId];
+        localStorage.setItem('savedChats', JSON.stringify(saved));
+        renderChatList();
+        showAlert('Chat deleted', 'success');
+    });
+}
+
+// ===== PER-CHAT SHARE MODAL =====
+let shareTargetId = null;
+
+function openChatShare(chatId) {
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    const chat = saved[chatId];
+    if (!chat) return;
+    shareTargetId = chatId;
+
+    const link = generateShareableLinkForData(chat);
+    document.getElementById('chatShareLink').value = link;
+
+    const qr = document.getElementById('chatShareQR');
+    qr.innerHTML = '';
+    if (link) {
+        new QRCode(qr, { text: link, width: 160, height: 160, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.H });
+    }
+    document.getElementById('chatShareModalOverlay').classList.add('active');
+}
+
+function closeChatShare() {
+    document.getElementById('chatShareModalOverlay').classList.remove('active');
+    shareTargetId = null;
+}
+
+// ===== SETTINGS =====
+function openSettings(tab = 'about') {
+    switchSettingsTab(tab);
+    document.getElementById('settingsPanel').classList.add('active');
+    document.getElementById('settingsOverlay').classList.add('active');
+}
+
+function closeSettings() {
+    document.getElementById('settingsPanel').classList.remove('active');
+    document.getElementById('settingsOverlay').classList.remove('active');
+}
+
+function switchSettingsTab(tabName) {
+    document.querySelectorAll('.settings-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    document.querySelectorAll('.settings-section').forEach(section => {
+        section.style.display = section.id === `stab-${tabName}` ? 'block' : 'none';
+    });
+}
+
+// Light mode
+const isLightMode = localStorage.getItem('lightMode') === 'true';
+if (isLightMode) {
+    document.body.classList.add('light-mode');
+    document.getElementById('lightModeToggle').checked = true;
+}
+
+document.getElementById('lightModeToggle').onchange = function() {
+    document.body.classList.toggle('light-mode', this.checked);
+    localStorage.setItem('lightMode', this.checked);
+};
 
 // ===== EVENT LISTENERS =====
-document.getElementById('share').onclick = openShareModal;
+document.getElementById('menuBtn').onclick = openMenu;
+document.getElementById('menuClose').onclick = closeMenu;
+document.getElementById('menuOverlay').onclick = closeMenu;
 
-const closeBtn = document.querySelector('.close');
-closeBtn.onclick = closeShareModal;
+document.getElementById('settingsBtn').onclick = () => openSettings();
+document.getElementById('settingsClose').onclick = closeSettings;
+document.getElementById('settingsOverlay').onclick = closeSettings;
 
-window.onclick = function(event) {
-  const modal = document.getElementById('shareModal');
-  if (event.target == modal) {
-    closeShareModal();
-  }
-}
+document.querySelectorAll('.settings-tab').forEach(btn => {
+    btn.onclick = () => switchSettingsTab(btn.dataset.tab);
+});
 
-document.getElementById('copyShareLink').onclick = function() {
-  const shareLink = document.getElementById('shareLink');
-  shareLink.select();
-  document.execCommand('copy');
-  this.textContent = 'Copied!';
-  setTimeout(() => {
-    this.textContent = 'Copy Link';
-  }, 2000);
-}
+document.getElementById('chatShareClose').onclick = closeChatShare;
+document.getElementById('chatShareModalOverlay').onclick = function(e) {
+    if (e.target === this) closeChatShare();
+};
 
-document.getElementById('exportChat').onclick = exportChatAsJSON;
+document.getElementById('copyChatShareLink').onclick = function() {
+    document.getElementById('chatShareLink').select();
+    document.execCommand('copy');
+    this.textContent = 'Copied!';
+    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+};
 
-document.getElementById('saveChat').onclick = function() {
-  const chatName = document.getElementById('chatName').value;
-  saveCurrentChat(chatName);
-}
+document.getElementById('downloadChatJSON').onclick = function() {
+    if (!shareTargetId) return;
+    const saved = JSON.parse(localStorage.getItem('savedChats') || '{}');
+    const chat = saved[shareTargetId];
+    if (chat) exportChatDataAsJSON(chat);
+};
 
-document.getElementById('loadChat').onclick = function() {
-  const chatName = document.getElementById('savedChats').value;
-  loadSavedChat(chatName);
-}
+document.getElementById('userNameInput').oninput = function() {
+    userName = this.value.trim() || 'You';
+    localStorage.setItem('userName', userName);
+};
 
-document.getElementById('deleteChat').onclick = function() {
-  const chatName = document.getElementById('savedChats').value;
-  deleteChat(chatName);
-}
+document.getElementById('agentIconInput').onchange = function() {
+    const file = this.files[0];
+    const area = document.getElementById('fileUploadArea');
+    const preview = document.getElementById('agentIconPreview');
+    if (file) {
+        area.classList.add('has-file');
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}"><span>${escapeHtml(file.name)}</span>`;
+            preview.classList.add('visible');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        area.classList.remove('has-file');
+        preview.classList.remove('visible');
+        preview.innerHTML = '';
+    }
+};
+
+document.getElementById('applyAgent').onclick = function() {
+    const newName = document.getElementById('agentNameInput').value.trim();
+    const newInstructions = document.getElementById('agentInstructionsInput').value.trim();
+    const file = document.getElementById('agentIconInput').files[0];
+
+    const apply = (iconDataUrl) => {
+        if (newName) name = newName;
+        if (newInstructions) {
+            sysInstructions = newInstructions + getSysSuffix();
+        }
+        if (iconDataUrl) AI_PROFILE = iconDataUrl;
+
+        sessionId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        conversationHistory = [{ role: 'assistant', content: `Welcome to ${name}!` }];
+        updateAgentUI();
+
+        document.getElementById('agentIconInput').value = '';
+        document.getElementById('fileUploadArea').classList.remove('has-file');
+        const preview = document.getElementById('agentIconPreview');
+        preview.classList.remove('visible');
+        preview.innerHTML = '';
+
+        setLandingMode(true);
+        render();
+        closeSettings();
+        showAlert(`Agent "${name}" applied!`, 'success');
+    };
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.height = 40;
+                const sSize = Math.min(img.width, img.height);
+                ctx.drawImage(img, (img.width - sSize) / 2, (img.height - sSize) / 2, sSize, sSize, 0, 0, 40, 40);
+                apply(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        apply(null);
+    }
+};

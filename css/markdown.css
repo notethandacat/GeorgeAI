@@ -1121,4 +1121,76 @@
   .markdown-body .highlight pre:has(+.zeroclipboard-container) {
     min-height: 52px;
   }
-  
+
+/* ===== LIGHT MODE ===== */
+body.light-mode .markdown-body {
+  color-scheme: light;
+  color: #1a1a1a;
+}
+
+body.light-mode .markdown-body h1,
+body.light-mode .markdown-body h2,
+body.light-mode .markdown-body h3,
+body.light-mode .markdown-body h4,
+body.light-mode .markdown-body h5,
+body.light-mode .markdown-body h6 {
+  color: #111;
+}
+
+body.light-mode .markdown-body h1 {
+  border-bottom-color: #d0d7de;
+}
+
+body.light-mode .markdown-body h2 {
+  border-bottom-color: #d0d7de;
+}
+
+body.light-mode .markdown-body hr {
+  background-color: #d0d7de;
+}
+
+body.light-mode .markdown-body blockquote {
+  color: #57606a;
+  border-left-color: #d0d7de;
+}
+
+body.light-mode .markdown-body code,
+body.light-mode .markdown-body tt {
+  background-color: rgba(175, 184, 193, 0.2);
+  color: #1a1a1a;
+}
+
+body.light-mode .markdown-body kbd {
+  color: #1a1a1a;
+  background-color: #f0f0f4;
+  border-color: #d0d7de;
+}
+
+body.light-mode .markdown-body pre,
+body.light-mode .markdown-body .highlight pre {
+  color: #24292f;
+  background-color: #f6f8fa;
+}
+
+body.light-mode .markdown-body table tr {
+  background-color: #ffffff;
+  border-top-color: #d0d7de;
+}
+
+body.light-mode .markdown-body table tr:nth-child(2n) {
+  background-color: #f6f8fa;
+}
+
+body.light-mode .markdown-body table th,
+body.light-mode .markdown-body table td {
+  border-color: #d0d7de;
+}
+
+body.light-mode .markdown-body a {
+  color: #0969da;
+}
+
+body.light-mode .markdown-body strong,
+body.light-mode .markdown-body b {
+  color: #111;
+}

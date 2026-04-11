@@ -6,59 +6,118 @@
         <link rel="stylesheet" href="css/bg.css">
         <link rel="stylesheet" href="css/markdown.css">
         <link rel="stylesheet" href="css/share.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <script src="https://cdn.jsdelivr.net/npm/marked@17.0.3/lib/marked.umd.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/marked-highlight@2.2.3/lib/index.umd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     </head>
-    <body>    
+    <body>
         <header>
             <button id="new">+</button>
-            <button id="share">&#xe80d;</button>
-            <a href="/createAgent.html" style="justify-self: flex-start; color: white;" id="ownagent">Create Agent</a>
+            <button id="menuBtn">&#xe5d2;</button>
             <h1>GeorgeAI</h1><p style="margin-left: 5px; margin-bottom: 1px;">by Ethan</p>
+            <button id="settingsBtn">&#xe8b8;</button>
         </header>
-        <div class="chat-box">
+
+        <div class="chat-box"></div>
+        <div id="welcome">
+            <h2 id="welcomeTitle">Welcome to GeorgeAI</h2>
+            <p id="welcomeSub">Ask me anything</p>
         </div>
         <div class="talk">
             <input type="text" class="thearea" placeholder="talk to george here">
             <button class="send">&#xe163;</button>
         </div>
 
-        <!-- Share Modal -->
-        <div id="shareModal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>Share Chat</h2>
+        <!-- Menu Panel (left) -->
+        <div id="menuOverlay" class="menu-overlay"></div>
+        <div id="menuPanel" class="menu-panel">
+            <div class="menu-panel__header">
+                <h2>Chats</h2>
+                <button id="menuClose" class="menu-panel__close">&#xe5cd;</button>
+            </div>
+            <div id="chatList" class="chat-list"></div>
+        </div>
+
+        <!-- Per-chat Share Modal -->
+        <div id="chatShareModalOverlay" class="chat-share-overlay">
+            <div id="chatShareModal" class="chat-share-content">
+                <div class="chat-share-header">
+                    <h3>Share Chat</h3>
+                    <button id="chatShareClose" class="settings-panel__close">&#xe5cd;</button>
+                </div>
                 <div class="share-options">
                     <div class="share-option">
                         <label>Share Link:</label>
                         <div class="share-link-container">
-                            <input type="text" id="shareLink" readonly class="share-input">
-                            <button id="copyShareLink" class="copy-btn">Copy Link</button>
+                            <input type="text" id="chatShareLink" readonly class="share-input">
+                            <button id="copyChatShareLink" class="copy-btn">Copy</button>
                         </div>
                     </div>
                     <div class="share-option qr-section">
-                        <label>Scan to Share (Mobile):</label>
-                        <div id="qrCode" class="qr-code-container"></div>
+                        <label>Scan to Share:</label>
+                        <div id="chatShareQR" class="qr-code-container"></div>
                     </div>
                     <div class="share-option">
-                        <label>Export as JSON:</label>
-                        <button id="exportChat" class="export-btn">Download</button>
+                        <label>Export:</label>
+                        <button id="downloadChatJSON" class="export-btn">Download JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Panel (right) -->
+        <div id="settingsOverlay" class="settings-overlay"></div>
+        <div id="settingsPanel" class="settings-panel">
+            <div class="settings-panel__header">
+                <h2>Settings</h2>
+                <button id="settingsClose" class="settings-panel__close">&#xe5cd;</button>
+            </div>
+            <div class="settings-panel__tabs">
+                <button class="settings-tab active" data-tab="about">About You</button>
+                <button class="settings-tab" data-tab="agent">Your Agent</button>
+            </div>
+
+            <!-- About You -->
+            <div class="settings-section" id="stab-about">
+                <div class="share-options">
+                    <div class="share-option">
+                        <label>Your Name:</label>
+                        <input type="text" id="userNameInput" placeholder="You" class="chat-name-input">
+                    </div>
+                    <div class="settings-divider"></div>
+                    <div class="settings-toggle-row">
+                        <span>Light Mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lightModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Your Agent -->
+            <div class="settings-section" id="stab-agent" style="display:none">
+                <div class="share-options">
+                    <div class="share-option">
+                        <label>Agent Name:</label>
+                        <input type="text" id="agentNameInput" placeholder="Name" class="chat-name-input">
                     </div>
                     <div class="share-option">
-                        <label>Save Chat:</label>
-                        <input type="text" id="chatName" placeholder="Enter chat name..." class="chat-name-input">
-                        <button id="saveChat" class="save-btn">Save</button>
+                        <label>System Instructions:</label>
+                        <textarea id="agentInstructionsInput" placeholder="System Instructions" class="agent-textarea"></textarea>
                     </div>
                     <div class="share-option">
-                        <label>Your Saved Chats:</label>
-                        <select id="savedChats" class="saved-chats-select">
-                            <option value="">-- No saved chats --</option>
-                        </select>
-                        <button id="loadChat" class="load-btn">Load</button>
-                        <button id="deleteChat" class="delete-btn">Delete</button>
+                        <label>Profile Icon:</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="agentIconInput" accept="image/*" class="agent-file-input">
+                            <span class="material-icons file-upload-icon">&#xe43e;</span>
+                            <span class="file-upload-text">Click to upload image</span>
+                        </div>
+                        <div id="agentIconPreview" class="agent-icon-preview"></div>
                     </div>
+                    <button id="applyAgent" class="apply-agent-btn">Apply Agent</button>
                 </div>
             </div>
         </div>

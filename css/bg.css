@@ -1,54 +1,98 @@
 body {
   text-align: center;
   margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: #101010;
+  font-family: 'Inter', Arial, sans-serif;
+  background: radial-gradient(ellipse at 50% -10%, #1a1030 0%, #0d0d0d 55%);
   overflow: hidden;
   position: relative;
   color: white;
 }
+
 header {
   display: flex;
   justify-content: center;
   align-items: center;
   position: fixed;
   width: 100%;
-  height: 70px;
-  background-color: #212121;
+  height: 64px;
+  background: rgba(12, 12, 12, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 1px 40px rgba(0, 0, 0, 0.5);
 }
 
-#ownagent {
+#settingsBtn {
   position: fixed;
   right: 15px;
-  text-decoration: none;
+  font-size: 20px;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   cursor: pointer;
+  font-family: "Material Icons", sans-serif;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#settingsBtn:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+#menuBtn {
+  position: fixed;
+  left: 63px;
+  font-size: 20px;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  font-family: "Material Icons", sans-serif;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#menuBtn:hover {
+  background: rgba(255, 255, 255, 0.13);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 #new {
   position: fixed;
   left: 15px;
-  font-size: 30px;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(65, 65, 65, 1);
-  color: white;
-  border: none;
-  border-radius: 20px;
+  font-size: 22px;
+  width: 38px;
+  height: 38px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
   cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-#share {
-  position: fixed;
-  left: 65px;
-  font-size: 20px;
-  width: 40px;
-  height: 40px;
-  background-color: rgba(65, 65, 65, 1);
+
+#new:hover {
+  background: rgba(255, 255, 255, 0.13);
   color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-family: "Material Icons", sans-serif;
+  border-color: rgba(255, 255, 255, 0.2);
 }
+
 
 .markdown-body {
   box-sizing: border-box;
@@ -65,14 +109,56 @@ header {
   background-color: rgba(33, 33, 33, 0.9);
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== LANDING / WELCOME STATE ===== */
+#welcome {
+  position: fixed;
+  top: 44vh;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  white-space: nowrap;
+  z-index: 100;
+}
+
+body.landing #welcome {
+  opacity: 1;
+}
+
+body.landing .chat-box {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#welcome h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.65) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+#welcome p {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 400;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.8rem;
-  letter-spacing: 0.08em;
-  transition: color 0.2s ease;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: all 0.2s ease;
 }
 
 header h1:hover {
@@ -85,13 +171,46 @@ header h1:hover {
 }
 
 @keyframes rainbowText {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ===== LIGHT MODE ===== */
+body.light-mode {
+  background: radial-gradient(ellipse at 50% -10%, #e8e0f5 0%, #f0f0f5 55%);
+  color: #111;
+}
+
+body.light-mode header {
+  background: rgba(240, 238, 248, 0.88);
+  border-bottom-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 30px rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode #new,
+body.light-mode #menuBtn,
+body.light-mode #settingsBtn {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.65);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+body.light-mode #new:hover,
+body.light-mode #menuBtn:hover,
+body.light-mode #settingsBtn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #111;
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+body.light-mode #welcome h2 {
+  background: linear-gradient(135deg, #111 0%, rgba(0, 0, 0, 0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.light-mode #welcome p {
+  color: rgba(0, 0, 0, 0.35);
 }
