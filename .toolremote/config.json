@@ -1,0 +1,26 @@
+{
+  "projectId": "995d921031e4411f97af553298585c8f",
+  "projectName": "GeorgeAI",
+  "mainBranch": "test",
+  "autosaveBranch": "autosave",
+  "autosave": {
+    "enabled": true,
+    "intervalSeconds": 180,
+    "retentionHours": 24,
+    "debounceSeconds": 5
+  },
+  "checkpoint": {
+    "intervalHours": 6,
+    "retentionDays": 7
+  },
+  "remote": {
+    "name": "origin",
+    "url": "https://github.com/notethandacat/GeorgeAI.git"
+  },
+  "largeFiles": {
+    "thresholdMB": 50,
+    "enabled": false,
+    "provider": "server",
+    "options": {}
+  }
+}
